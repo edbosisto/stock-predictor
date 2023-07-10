@@ -1,0 +1,30 @@
+# Flask
+/backend/__pycache__/
+/backend/*.py[cod]
+/backend/*.sqlite
+
+# React
+/frontend/node_modules/
+/frontend/build/
+
+# Python Virtual Environment
+/env/
+/.env
+
+# IDE files
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite3
