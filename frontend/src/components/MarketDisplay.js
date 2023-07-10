@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import MarketInfo from "./MarketInfo";
 
@@ -30,7 +30,33 @@ const MarketDisplaySection = styled.div`
   }
 `;
 
+const DropdownMenu = styled.select`
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+`;
+
 function MarketDisplay() {
+  const [asxStocks, setAsxStocks] = useState([]);
+  const [selectedStock, setSelectedStock] = useState("");
+
+  useEffect(() => {
+    // Fetch the list of ASX stocks from the backend API
+    fetch("http://localhost:5000/api/asxstocks")
+      .then((response) => response.json())
+      .then((data) => {
+        setAsxStocks(data);
+      })
+      .catch((error) => {
+        console.log("Error fetching ASX stocks:", error);
+      });
+  }, []);
+
+  const handleStockSelection = (event) => {
+    setSelectedStock(event.target.value);
+  };
+
   return (
     <MarketDisplayContainer>
       <MarketDisplaySection>
@@ -43,13 +69,24 @@ function MarketDisplay() {
         />
       </MarketDisplaySection>
       <MarketDisplaySection>
-        <h2>ASX</h2>
-        <MarketInfo
-          title="ASX Stock"
-          state="Open"
-          value="200.00"
-          change="2.4"
-        />
+        <h2>
+          <DropdownMenu value={selectedStock} onChange={handleStockSelection}>
+            <option value="">Select ASX Stock</option>
+            {asxStocks.map((stock) => (
+              <option key={stock.id} value={stock.symbol}>
+                {stock.name}
+              </option>
+            ))}
+          </DropdownMenu>
+        </h2>
+        {selectedStock && (
+          <MarketInfo
+            title={selectedStock}
+            state="Open"
+            value="200.00"
+            change="2.4"
+          />
+        )}
       </MarketDisplaySection>
     </MarketDisplayContainer>
   );

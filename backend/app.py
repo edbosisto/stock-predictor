@@ -1,23 +1,25 @@
 from flask import Flask, g, request, jsonify
 import mysql.connector
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
 # Connect and configure MySQL DB
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'stock_app'
-app.config['MYSQL_PASSWORD'] = 'StockApp123#'
-app.config['MYSQL_DB'] = 'stockapp'
+db_config = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
+}
 
 
 def get_db():
     if 'db' not in g:
-        g.db = mysql.connector.connect(
-            host=app.config['MYSQL_HOST'],
-            user=app.config['MYSQL_USER'],
-            password=app.config['MYSQL_PASSWORD'],
-            database=app.config['MYSQL_DB']
-        )
+        g.db = mysql.connector.connect(**db_config)
     return g.db
 
 
@@ -37,6 +39,34 @@ def index():
 
     # Process the rows and return a response
     return "Hello World!"  # replace with desired response
+
+
+# Route to fetch ASX stocks
+@app.route('/api/asxstocks')
+def get_asx_stocks():
+    db = get_db()
+    cursor = db.cursor()
+
+    # Execute query to fetch ASX stocks
+    cursor.execute('SELECT * FROM ASX_Stock')
+
+    # Fetch all rows and build a list of stock objects
+    stocks = []
+    for row in cursor.fetchall():
+        stock = {
+            'id': row[0],
+            'symbol': row[1],
+            'name': row[2]
+        }
+        stocks.append(stock)
+
+    # Convert the list of stocks to JSON response
+    response = jsonify(stocks)
+
+    # Set response headers to allow cross-origin requests (adjust as needed)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
+    return response
 
 
 # Stock Statistics
