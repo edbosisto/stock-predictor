@@ -1,14 +1,15 @@
 import React from "react";
+import styled from "styled-components";
+
+const HeadingContainer = styled.h1`
+  text-align: center;
+  font-size: 2.5rem;
+  font-family: Arial;
+  margin-top: 3rem;
+`;
 
 function Heading({ text }) {
-  const headingStyles = {
-    textAlign: "center",
-    fontSize: "2.5rem",
-    fontFamily: "Arial",
-    marginTop: "3rem",
-  };
-
-  return <h1 style={headingStyles}>{text}</h1>;
+  return <HeadingContainer>{text}</HeadingContainer>;
 }
 
 export default Heading;
