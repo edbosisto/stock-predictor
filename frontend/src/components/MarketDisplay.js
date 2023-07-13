@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import MarketInfo from "./MarketInfo";
+import Sp500MarketInfo from "./sp500MarketInfo";
 
 const MarketDisplayContainer = styled.div`
   display: flex;
@@ -61,12 +62,7 @@ function MarketDisplay() {
     <MarketDisplayContainer>
       <MarketDisplaySection>
         <h2>US Index</h2>
-        <MarketInfo
-          title="S&P 500"
-          state="Closed"
-          value="3,000.00"
-          change="-1.5"
-        />
+        <Sp500MarketInfo />
       </MarketDisplaySection>
       <MarketDisplaySection>
         <h2>
@@ -85,6 +81,7 @@ function MarketDisplay() {
             state="Open"
             value="200.00"
             change="2.4"
+            previousClose="180.00" // Replace with actual previous close value
           />
         )}
       </MarketDisplaySection>

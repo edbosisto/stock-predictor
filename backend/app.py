@@ -1,5 +1,7 @@
 from flask import Flask, g, request, jsonify
+from flask_cors import CORS
 import mysql.connector
+import requests
 import os
 from dotenv import load_dotenv
 
@@ -7,6 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+
+# Allow cross-origin-resource-sharing
+CORS(app)
 
 # Connect and configure MySQL DB
 db_config = {
@@ -39,6 +44,39 @@ def index():
 
     # Process the rows and return a response
     return "Hello World!"  # replace with desired response
+
+
+# US Index - S&P 500 API data
+@app.route("/api/sp500")
+def get_sp500_data():
+    url = "https://yahoo-finance127.p.rapidapi.com/price/%5EGSPC"
+    headers = {
+        "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
+        "X-RapidAPI-Host": os.getenv("RAPIDAPI_HOST"),
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract the required data from the response
+        previous_close = data["regularMarketPreviousClose"]["raw"]
+        current_value = data["regularMarketPrice"]["raw"]
+        percent_change = round(
+            data["regularMarketChangePercent"]["raw"] * 100, 2)
+
+        # Create a dictionary with the extracted data
+        sp500_data = {
+            "previous_close": previous_close,
+            "current_value": current_value,
+            "percent_change": percent_change,
+        }
+
+        return jsonify(sp500_data)
+
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Route to fetch ASX stocks

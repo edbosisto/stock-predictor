@@ -11,18 +11,6 @@ const MarketInfoTitle = styled.h2`
   margin-bottom: 0.5rem;
 `;
 
-const MarketInfoState = styled.p`
-  font-weight: bold;
-
-  &.open {
-    color: #32cd32;
-  }
-
-  &.closed {
-    color: #ff0000;
-  }
-`;
-
 const MarketInfoChange = styled.p`
   color: green;
 
@@ -31,16 +19,18 @@ const MarketInfoChange = styled.p`
   }
 `;
 
-function MarketInfo({ title, state, value, change }) {
+function MarketInfo({ title, value, change, previousClose }) {
   const changeClass = change > 0 ? "positive" : "negative";
-  const stateClass = state === "Open" ? "open" : "closed";
 
   return (
     <MarketInfoContainer>
       <MarketInfoTitle>{title}</MarketInfoTitle>
-      <MarketInfoState className={stateClass}>{state}</MarketInfoState>
       <p>{value}</p>
-      <MarketInfoChange className={changeClass}>{change}%</MarketInfoChange>
+      <MarketInfoChange className={changeClass}>
+        {change}%
+        <br />
+        (Previous Close: {previousClose})
+      </MarketInfoChange>
     </MarketInfoContainer>
   );
 }
