@@ -3,6 +3,7 @@ from flask_cors import CORS
 import mysql.connector
 import requests
 import os
+import pandas as pd
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -141,32 +142,78 @@ def get_asx_stocks():
     return response
 
 
-# Stock Statistics
-@app.route('/stock-statistics', methods=['GET'])
-def get_stock_statistics():
-    asx_stock = request.args.get('asx_stock')
+# Route to compare S&P 500 and ASX stock
+@app.route("/api/compare", methods=["GET"])
+def compare_sp500_asx_stock():
+    asx_stock_symbol = request.args.get("symbol")
 
+    # Fetch historical data for the selected ASX stock from your database
+    asx_historical_data = get_asx_historical_data(asx_stock_symbol)
+
+    # Fetch historical data for the S&P 500 from your database
+    sp500_historical_data = get_sp500_historical_data()
+
+    # Perform data synchronization based on dates
+    # We'll assume both datasets have dates in the same format (e.g., "YYYY-MM-DD")
+    merged_data = pd.merge(
+        asx_historical_data, sp500_historical_data, on="date", suffixes=("_asx", "_sp500"))
+
+    # Calculate percentage change for both the ASX stock and the S&P 500
+    merged_data["percent_change_asx"] = (
+        merged_data["closing_price_asx"] / merged_data["closing_price_asx"].shift(1) - 1) * 100
+    merged_data["percent_change_sp500"] = (
+        merged_data["closing_price_sp500"] / merged_data["closing_price_sp500"].shift(1) - 1) * 100
+
+    # Calculate the probability of ASX stock moving in the same direction as S&P 500
+    positive_sp500 = merged_data["percent_change_sp500"] > 0
+    positive_asx_stock = merged_data["percent_change_asx"] > 0
+    probability_up = (positive_sp500 & positive_asx_stock).mean()
+    probability_down = (~positive_sp500 & ~positive_asx_stock).mean()
+
+    result = {
+        "symbol": asx_stock_symbol,
+        "probability_up": round(probability_up * 100, 2),
+        "probability_down": round(probability_down * 100, 2),
+    }
+
+    return jsonify(result)
+
+
+# Function to fetch historical data for a given ASX stock from your database
+def get_asx_historical_data(symbol):
     db = get_db()
     cursor = db.cursor()
 
-    # Execute the SQL query to retrieve the relevant data
+    # Execute query to fetch historical data for the selected ASX stock
     query = f"""
-        SELECT COUNT(*) / (SELECT COUNT(*) FROM Comparison_Result
-                           WHERE us_indicator_closing_price > 0) * 100 AS percentage
-        FROM Comparison_Result
-        WHERE asx_stock = '{asx_stock}' AND us_indicator_closing_price > 0
+        SELECT date, closing_price
+        FROM asx_stock_price
+        WHERE asx_stock_id = (SELECT id FROM asx_stock WHERE symbol = '{symbol}')
     """
     cursor.execute(query)
-    result = cursor.fetchone()
-    percentage = result[0]
 
-    # Format the response
-    response = {
-        'asx_stock': asx_stock,
-        'percentage': percentage
-    }
+    # Fetch all rows and build a DataFrame of historical data
+    data = cursor.fetchall()
+    columns = ["date", "closing_price_asx"]
+    asx_historical_data = pd.DataFrame(data, columns=columns)
 
-    return jsonify(response)
+    return asx_historical_data
+
+
+# Function to fetch historical data for the S&P 500 from your database
+def get_sp500_historical_data():
+    db = get_db()
+    cursor = db.cursor()
+
+    # Execute query to fetch historical data for the S&P 500
+    cursor.execute('SELECT date, closing_price FROM sp500_index')
+
+    # Fetch all rows and build a DataFrame of historical data
+    data = cursor.fetchall()
+    columns = ["date", "closing_price_sp500"]
+    sp500_historical_data = pd.DataFrame(data, columns=columns)
+
+    return sp500_historical_data
 
 
 if __name__ == '__main__':
