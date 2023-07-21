@@ -79,7 +79,41 @@ def get_sp500_data():
         return jsonify({"error": str(e)}), 500
 
 
-# Route to fetch ASX stocks
+# Route to get ASX stock data from Yahoo finance API
+@app.route("/api/asxstock/<symbol>", methods=["GET"])
+def get_asx_stock_data(symbol):
+    url = f"https://yahoo-finance127.p.rapidapi.com/price/{symbol}"
+    headers = {
+        "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
+        "X-RapidAPI-Host": os.getenv("RAPIDAPI_HOST"),
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract the required data from the response
+        previous_close = data["regularMarketPreviousClose"]["raw"]
+        current_price = data["regularMarketPrice"]["raw"]
+        percent_change = round(
+            data["regularMarketChangePercent"]["raw"] * 100, 2)
+
+        # Create a dictionary with the extracted data
+        stock_data = {
+            "symbol": symbol,
+            "previous_close": previous_close,
+            "current_price": current_price,
+            "percent_change": percent_change,
+        }
+
+        return jsonify(stock_data)
+
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Route to fetch ASX stocks from database
 @app.route('/api/asxstocks')
 def get_asx_stocks():
     db = get_db()

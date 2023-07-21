@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import MarketInfo from "./MarketInfo";
 import Sp500MarketInfo from "./sp500MarketInfo";
+import AsxMarketInfo from "./AsxMarketInfo";
 
 const MarketDisplayContainer = styled.div`
   display: flex;
@@ -41,6 +41,7 @@ const DropdownMenu = styled.select`
 function MarketDisplay() {
   const [asxStocks, setAsxStocks] = useState([]);
   const [selectedStock, setSelectedStock] = useState("");
+  const [previousClose, setPreviousClose] = useState(""); // State for previous close
 
   useEffect(() => {
     // Fetch the list of ASX stocks from the backend API
@@ -57,6 +58,21 @@ function MarketDisplay() {
   const handleStockSelection = (event) => {
     setSelectedStock(event.target.value);
   };
+
+  // Fetch previous close when selected stock changes
+  useEffect(() => {
+    if (selectedStock) {
+      // Fetch the previous close value for the selected stock from the backend API
+      fetch(`http://localhost:5000/api/asxstock/${selectedStock}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setPreviousClose(data.previous_close);
+        })
+        .catch((error) => {
+          console.log("Error fetching previous close:", error);
+        });
+    }
+  }, [selectedStock]);
 
   return (
     <MarketDisplayContainer>
@@ -76,13 +92,7 @@ function MarketDisplay() {
           </DropdownMenu>
         </h2>
         {selectedStock && (
-          <MarketInfo
-            title={selectedStock}
-            state="Open"
-            value="200.00"
-            change="2.4"
-            previousClose="180.00" // Replace with actual previous close value
-          />
+          <AsxMarketInfo symbol={selectedStock} previousClose={previousClose} />
         )}
       </MarketDisplaySection>
     </MarketDisplayContainer>
