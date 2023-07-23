@@ -158,22 +158,31 @@ def compare_sp500_asx_stock():
     merged_data = pd.merge(
         asx_historical_data, sp500_historical_data, on="date", suffixes=("_asx", "_sp500"))
 
-    # Calculate percentage change for both the ASX stock and the S&P 500
-    merged_data["percent_change_asx"] = (
-        merged_data["closing_price_asx"] / merged_data["closing_price_asx"].shift(1) - 1) * 100
-    merged_data["percent_change_sp500"] = (
-        merged_data["closing_price_sp500"] / merged_data["closing_price_sp500"].shift(1) - 1) * 100
+    # Calculate the percentage of days where both the ASX stock and the S&P 500 moved in the same direction
+    total_days = len(merged_data)
+    same_direction_count = 0
+    opposite_direction_count = 0
 
-    # Calculate the probability of ASX stock moving in the same direction as S&P 500
-    positive_sp500 = merged_data["percent_change_sp500"] > 0
-    positive_asx_stock = merged_data["percent_change_asx"] > 0
-    probability_up = (positive_sp500 & positive_asx_stock).mean()
-    probability_down = (~positive_sp500 & ~positive_asx_stock).mean()
+    for i in range(2, total_days):
+        asx_direction_today = "up" if merged_data.at[i,
+                                                     "closing_price_asx"] > merged_data.at[i - 1, "closing_price_asx"] else "down"
+        sp500_direction_prev_day = "up" if merged_data.at[i - 1,
+                                                          "closing_price_sp500"] > merged_data.at[i - 2, "closing_price_sp500"] else "down"
+
+        if asx_direction_today == sp500_direction_prev_day:
+            same_direction_count += 1
+        else:
+            opposite_direction_count += 1
+
+    probability_same_direction = (
+        same_direction_count / (total_days - 2)) * 100
+    probability_opposite_direction = (
+        opposite_direction_count / (total_days - 2)) * 100
 
     result = {
         "symbol": asx_stock_symbol,
-        "probability_up": round(probability_up * 100, 2),
-        "probability_down": round(probability_down * 100, 2),
+        "probability_same_direction": round(probability_same_direction, 2),
+        "probability_opposite_direction": round(probability_opposite_direction, 2),
     }
 
     return jsonify(result)
