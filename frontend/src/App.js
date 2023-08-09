@@ -5,7 +5,7 @@ import MarketDisplay from "./components/MarketDisplay";
 function App() {
   return (
     <div className="App">
-      <Heading text="Day Trader" />
+      <Heading text="The Aussie Day Trader" />
       <MarketDisplay />
     </div>
   );

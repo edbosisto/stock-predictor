@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Sp500MarketInfo from "./sp500MarketInfo";
 import AsxMarketInfo from "./AsxMarketInfo";
+import StockComparison from "./StockComparison"; // Import StockComparison component
 
 const MarketDisplayContainer = styled.div`
   display: flex;
@@ -92,7 +93,14 @@ function MarketDisplay() {
           </DropdownMenu>
         </h2>
         {selectedStock && (
-          <AsxMarketInfo symbol={selectedStock} previousClose={previousClose} />
+          <>
+            <AsxMarketInfo
+              symbol={selectedStock}
+              previousClose={previousClose}
+            />
+            <StockComparison symbol={selectedStock} />{" "}
+            {/* Render StockComparison */}
+          </>
         )}
       </MarketDisplaySection>
     </MarketDisplayContainer>
