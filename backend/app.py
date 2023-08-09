@@ -34,8 +34,9 @@ def close_db(error):
     if 'db' in g:
         g.db.close()
 
-
 # Homepage
+
+
 @app.route("/")
 def index():
     db = get_db()
@@ -46,8 +47,9 @@ def index():
     # Process the rows and return a response
     return "Hello World!"  # replace with desired response
 
-
 # US Index - S&P 500 API data
+
+
 @app.route("/api/sp500")
 def get_sp500_data():
     url = "https://yahoo-finance127.p.rapidapi.com/price/%5EGSPC"
@@ -64,14 +66,15 @@ def get_sp500_data():
         # Extract the required data from the response
         previous_close = data["regularMarketPreviousClose"]["raw"]
         current_value = data["regularMarketPrice"]["raw"]
-        percent_change = round(
-            data["regularMarketChangePercent"]["raw"] * 100, 2)
+        percent_change = ((current_value - previous_close) /
+                          previous_close) * 100
 
         # Create a dictionary with the extracted data
         sp500_data = {
             "previous_close": previous_close,
             "current_value": current_value,
-            "percent_change": percent_change,
+            # Round the percentage change to 2 decimal places
+            "percent_change": round(percent_change, 2),
         }
 
         return jsonify(sp500_data)
@@ -79,8 +82,9 @@ def get_sp500_data():
     except requests.exceptions.HTTPError as e:
         return jsonify({"error": str(e)}), 500
 
-
 # Route to get ASX stock data from Yahoo finance API
+
+
 @app.route("/api/asxstock/<symbol>", methods=["GET"])
 def get_asx_stock_data(symbol):
     url = f"https://yahoo-finance127.p.rapidapi.com/price/{symbol}"
@@ -97,15 +101,16 @@ def get_asx_stock_data(symbol):
         # Extract the required data from the response
         previous_close = data["regularMarketPreviousClose"]["raw"]
         current_price = data["regularMarketPrice"]["raw"]
-        percent_change = round(
-            data["regularMarketChangePercent"]["raw"] * 100, 2)
+        percent_change = ((current_price - previous_close) /
+                          previous_close) * 100
 
         # Create a dictionary with the extracted data
         stock_data = {
             "symbol": symbol,
             "previous_close": previous_close,
             "current_price": current_price,
-            "percent_change": percent_change,
+            # Round the percentage change to 2 decimal places
+            "percent_change": round(percent_change, 2),
         }
 
         return jsonify(stock_data)
@@ -113,8 +118,9 @@ def get_asx_stock_data(symbol):
     except requests.exceptions.HTTPError as e:
         return jsonify({"error": str(e)}), 500
 
-
 # Route to fetch ASX stocks from database
+
+
 @app.route('/api/asxstocks')
 def get_asx_stocks():
     db = get_db()
@@ -141,8 +147,9 @@ def get_asx_stocks():
 
     return response
 
-
 # Route to compare S&P 500 and ASX stock
+
+
 @app.route("/api/compare", methods=["GET"])
 def compare_sp500_asx_stock():
     asx_stock_symbol = request.args.get("symbol")
@@ -187,8 +194,9 @@ def compare_sp500_asx_stock():
 
     return jsonify(result)
 
-
 # Function to fetch historical data for a given ASX stock from your database
+
+
 def get_asx_historical_data(symbol):
     db = get_db()
     cursor = db.cursor()
@@ -208,8 +216,9 @@ def get_asx_historical_data(symbol):
 
     return asx_historical_data
 
-
 # Function to fetch historical data for the S&P 500 from your database
+
+
 def get_sp500_historical_data():
     db = get_db()
     cursor = db.cursor()
